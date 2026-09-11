@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>PQC Hybrid Commitment (PQCHC) X.509 v3 Extension</title>
+<meta content="Brian Vicente" name="author">
+<meta content="
+       
+        This document defines the PQC Hybrid Commitment (PQCHC) X.509 v3 extension,
+        a non-critical certificate extension that records a cryptographic commitment
+        to a post-quantum algorithm migration schedule directly in an X.509 certificate.
+        The commitment allows relying parties to verify, at certificate validation time,
+        that the issuing CA has made a binding, verifiable declaration of its PQC
+        migration timeline.
+       
+       
+        This revision (-03) clarifies differentiation from composite-signature schemes
+        (draft-ietf-lamps-pq-composite-sigs, draft-ietf-lamps-cert-binding-for-multi-auth)
+        and adds a Posture B IPR notice. The PQCHC extension encodes a commitment to
+        future algorithm agility — it is not itself a composite signature scheme and
+        does not alter the primary signature algorithm of the certificate.
+       
+    " name="description">
+<meta content="xml2rfc 3.34.1" name="generator">
+<meta content="X.509" name="keyword">
+<meta content="post-quantum" name="keyword">
+<meta content="hybrid" name="keyword">
+<meta content="commitment" name="keyword">
+<meta content="certificate" name="keyword">
+<meta content="LAMPS" name="keyword">
+<meta content="ML-DSA" name="keyword">
+<meta content="SLH-DSA" name="keyword">
+<meta content="draft-vicente-lamps-pqchc-04" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.1
+    Python 3.10.12
+    ConfigArgParse 1.5.3
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.11.3
+    pycountry 26.2.16
+    PyYAML 6.0.3
+    requests 2.34.2
+    wcwidth 0.8.3
+    weasyprint 54.1
+-->
+<link href="draft-vicente-lamps-pqchc-04.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">/*
+
+  NOTE: Changes at the bottom of this file overrides some earlier settings.
+
+  Once the style has stabilized and has been adopted as an official RFC style,
+  this can be consolidated so that style settings occur only in one place, but
+  for now the contents of this file consists first of the initial CSS work as
+  provided to the RFC Formatter (xml2rfc) work, followed by itemized and
+  commented changes found necessary during the development of the v3
+  formatters.
+
+*/
+
+/* fonts */
+@import url('https://static.ietf.org/fonts/noto-sans/import.css'); /* Sans-serif */
+@import url('https://static.ietf.org/fonts/noto-serif/import.css'); /* Serif (print) */
+@import url('https://static.ietf.org/fonts/roboto-mono/import.css'); /* Monospace */
+
+:root {
+  --font-sans: 'Noto Sans', Arial, Helvetica, sans-serif;
+  --font-serif: 'Noto Serif', 'Times', 'Times New Roman', serif;
+  --font-mono: 'Roboto Mono', Courier, 'Courier New', monospace;
+}
+
+@viewport {
+  zoom: 1.0;
+}
+@-ms-viewport {
+  width: extend-to-zoom;
+  zoom: 1.0;
+}
+/* general and mobile first */
+html {
+}
+body {
+  max-width: 90%;
+  margin: 1.5em auto;
+  color: #222;
+  background-color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  overflow-wrap: break-word;
+}
+.ears {
+  display: none;
+}
+
+/* headings */
+#title, h1, h2, h3, h4, h5, h6 {
+  margin: 1em 0 0.5em;
+  font-weight: bold;
+  line-height: 1.3;
+}
+#title {
+  clear: both;
+  border-bottom: 1px solid #ddd;
+  margin: 0 0 0.5em 0;
+  padding: 1em 0 0.5em;
+}
+.author {
+  padding-bottom: 4px;
+}
+h1 {
+  font-size: 26px;
+  margin: 1em 0;
+}
+h2 {
+  font-size: 22px;
+  margin-top: -20px;  /* provide offset for in-page anchors */
+  padding-top: 33px;
+}
+h3 {
+  font-size: 18px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h4 {
+  font-size: 16px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h5, h6 {
+  font-size: 14px;
+}
+#n-copyright-notice {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+}
+/* general structure */
+p {
+  padding: 0;
+  margin: 0 0 1em 0;
+  text-align: left;
+}
+div, span {
+  position: relative;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+@media print {
+  svg {
+    max-height: 850px;
+    max-width: 660px;
+  }
+}
+svg[font-family~="serif" i], svg [font-family~="serif" i] {
+  font-family: var(--font-serif);
+}
+svg[font-family~="sans-serif" i], svg [font-family~="sans-serif" i] {
+  font-family: var(--font-sans);
+}
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  display: table;
+  border: none;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 1em 2em;
+}
+ol ol, ul ul, ol ul, ul ol {
+  margin-left: 1em;
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+.ulCompact li {
+  margin: 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+}
+ul.empty li, .ulEmpty li {
+  margin-top: 0.5em;
+}
+ul.ulBare, li.ulBare {
+  margin-left: 0em !important;
+}
+ul.compact, .ulCompact,
+ol.compact, .olCompact {
+  line-height: 100%;
+  margin: 0 0 0 2em;
+}
+
+/* definition lists */
+dl {
+}
+dl > dt {
+  float: left;
+  margin-right: 1em;
+}
+/* 
+dl.nohang > dt {
+  float: none;
+}
+*/
+dl > dd {
+  margin-bottom: .8em;
+  min-height: 1.3em;
+}
+dl.compact > dd, .dlCompact > dd {
+  margin-bottom: 0em;
+}
+dl > dd > dl {
+  margin-top: 0.5em;
+  margin-bottom: 0em;
+}
+
+/* links */
+a {
+  text-decoration: none;
+}
+a[href] {
+  color: #22e; /* Arlen: WCAG 2019 */
+}
+a[href]:hover {
+  background-color: #f2f2f2;
+}
+figcaption a[href],
+a[href].selfRef {
+  color: #222;
+}
+/* XXX probably not this:
+a.selfRef:hover {
+  background-color: transparent;
+  cursor: default;
+} */
+
+/* Figures */
+tt, code, pre {
+  background-color: #f9f9f9;
+  font-family: var(--font-mono);
+}
+pre {
+  border: 1px solid #eee;
+  margin: 0;
+  padding: 1em;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption {
+  font-style: italic;
+  margin: 0 0 1em 0;
+}
+@media screen {
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+    max-width: calc(100% - 22px);
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 1.2em 2em;
+}
+blockquote {
+  background-color: #f9f9f9;
+  color: #111; /* Arlen: WCAG 2019 */
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  margin: 1em 0;
+}
+blockquote > *:last-child {
+  margin-bottom: 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+.xref {
+  overflow-wrap: normal;
+}
+
+/* tables */
+table {
+  width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  border: 1px solid #eee;
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5em 0.75em;
+}
+th {
+  text-align: left;
+  background-color: #e9e9e9;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f5f5f5;
+}
+table caption {
+  font-style: italic;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+table p {
+  /* XXX to avoid bottom margin on table row signifiers. If paragraphs should
+     be allowed within tables more generally, it would be far better to select on a class. */
+  margin: 0;
+}
+sub,
+sup {
+ white-space: nowrap;
+}
+
+/* pilcrow */
+a.pilcrow {
+  color: #666; /* Arlen: AHDJ 2019 */
+  text-decoration: none;
+  visibility: hidden;
+  user-select: none;
+  -ms-user-select: none;
+  -o-user-select:none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+@media screen {
+  aside:hover > a.pilcrow,
+  p:hover > a.pilcrow,
+  blockquote:hover > a.pilcrow,
+  div:hover > a.pilcrow,
+  li:hover > a.pilcrow,
+  pre:hover > a.pilcrow {
+    visibility: visible;
+  }
+  a.pilcrow:hover {
+    background-color: transparent;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.bcp14 {
+  font-variant: small-caps;
+}
+
+.role {
+  font-variant: all-small-caps;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: 0.9em;
+}
+#identifiers dt {
+  width: 3em;
+  clear: left;
+}
+#identifiers dd {
+  float: left;
+  margin-bottom: 0;
+}
+/* Fix PDF info block run off issue */
+@media print {
+  #identifiers dd {
+    max-width: 100%;
+  }
+}
+#identifiers .authors .author {
+  display: inline-block;
+  margin-right: 1.5em;
+}
+#identifiers .authors .org {
+  font-style: italic;
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #666; /* Arlen: WCAG 2019 */
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: left;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc  {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+}
+nav.toc ul {
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+}
+nav.toc li {
+  line-height: 1.3em;
+  margin: 0.75em 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+/* references */
+.references dt {
+  text-align: right;
+  font-weight: bold;
+  min-width: 7em;
+}
+.references dd {
+  margin-left: 8em;
+  overflow: auto;
+}
+
+.refInstance {
+  margin-bottom: 1.25em;
+}
+
+.refSubseries {
+  margin-bottom: 1.25em;
+}
+
+.references .ascii {
+  margin-bottom: 0.25em;
+}
+
+/* index */
+.index ul {
+  margin: 0 0 0 1em;
+  padding: 0;
+  list-style: none;
+}
+.index ul ul {
+  margin: 0;
+}
+.index li {
+  margin: 0;
+  text-indent: -2em;
+  padding-left: 2em;
+  padding-bottom: 5px;
+}
+.indexIndex {
+  margin: 0.5em 0 1em;
+}
+.index a {
+  font-weight: 700;
+}
+/* make the index two-column on all but the smallest screens */
+@media (min-width: 600px) {
+  .index ul {
+    -moz-column-count: 2;
+    -moz-column-gap: 20px;
+  }
+  .index ul ul {
+    -moz-column-count: 1;
+    -moz-column-gap: 0;
+  }
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  margin: 1em 0;
+}
+
+address.vcard .nameRole {
+  font-weight: 700;
+  margin-left: 0;
+}
+address.vcard .label {
+  font-family: var(--font-sans);
+  margin: 0.5em 0;
+}
+address.vcard .type {
+  display: none;
+}
+.alternative-contact {
+  margin: 1.5em 0 1em;
+}
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+
+/* temporary notes */
+.rfcEditorRemove::before {
+  position: absolute;
+  top: 0.2em;
+  right: 0.2em;
+  padding: 0.2em;
+  content: "The RFC Editor will remove this note";
+  color: #9e2a00; /* Arlen: WCAG 2019 */
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+}
+.rfcEditorRemove {
+  position: relative;
+  padding-top: 1.8em;
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  border-radius: 3px;
+}
+.cref {
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+/* alternative layout for smaller screens */
+@media screen and (max-width: 1023px) {
+  body {
+    padding-top: 2em;
+  }
+  #title {
+    padding: 1em 0;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-top: -18px;  /* provide offset for in-page anchors */
+    padding-top: 38px;
+  }
+  #identifiers dd {
+    max-width: 60%;
+  }
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    background-color: inherit;
+    border-bottom: 1px solid #ccc;
+  }
+  #toc h2 {
+    margin: -1px 0 0 0;
+    padding: 4px 0 4px 6px;
+    padding-right: 1em;
+    min-width: 190px;
+    font-size: 1.1em;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+  }
+  #toc h2::before { /* css hamburger */
+    float: right;
+    position: relative;
+    width: 1em;
+    height: 1px;
+    left: -164px;
+    margin: 6px 0 0 0;
+    background: white none repeat scroll 0 0;
+    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+    content: "";
+  }
+  #toc nav {
+    display: none;
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+}
+
+/* alternative layout for wide screens */
+@media screen and (min-width: 1024px) {
+  body {
+    max-width: 724px;
+    margin: 42px auto;
+    padding-left: 1.5em;
+    padding-right: 29em;
+  }
+  #toc {
+    position: fixed;
+    top: 42px;
+    right: 42px;
+    width: 25%;
+    margin: 0;
+    padding: 0 1em;
+    z-index: 1;
+  }
+  #toc h2 {
+    border-top: none;
+    border-bottom: 1px solid #ddd;
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 0;
+    overflow: auto;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre {
+    page-break-inside: avoid;
+  }
+  figure {
+    overflow: scroll;
+  }
+  .breakable pre {
+    break-inside: auto;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  h2+*, h3+*, h4+*, h5+*, h6+* {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+/* This is commented out here, as the string-set: doesn't
+   pass W3C validation currently */
+/*
+.ears thead .left {
+  string-set: ears-top-left content();
+}
+
+.ears thead .center {
+  string-set: ears-top-center content();
+}
+
+.ears thead .right {
+  string-set: ears-top-right content();
+}
+
+.ears tfoot .left {
+  string-set: ears-bottom-left content();
+}
+
+.ears tfoot .center {
+  string-set: ears-bottom-center content();
+}
+
+.ears tfoot .right {
+  string-set: ears-bottom-right content();
+}
+*/
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+  /* The following is commented out here, but set appropriately by in code, as
+     the content depends on the document */
+  /*
+  @top-left {
+    content: 'Internet-Draft';
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-left {
+    content: string(ears-top-left);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-center {
+    content: string(ears-top-center);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-right {
+    content: string(ears-top-right);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @bottom-left {
+    content: string(ears-bottom-left);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-center {
+    content: string(ears-bottom-center);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-right {
+      content: '[Page ' counter(page) ']';
+      vertical-align: top;
+      border-top: solid 1px #ccc;
+  }
+  */
+
+}
+
+/* Changes introduced to fix issues found during implementation */
+/* Make sure links are clickable even if overlapped by following H* */
+a {
+  z-index: 2;
+}
+/* Separate body from document info even without intervening H1 */
+section {
+  clear: both;
+}
+
+
+/* Top align author divs, to avoid names without organization dropping level with org names */
+.author {
+  vertical-align: top;
+}
+
+/* Leave room in document info to show Internet-Draft on one line */
+#identifiers dt {
+  width: 8em;
+}
+
+/* Don't waste quite as much whitespace between label and value in doc info */
+#identifiers dd {
+  margin-left: 1em;
+}
+
+/* Give floating toc a background color (needed when it's a div inside section */
+#toc {
+  background-color: white;
+}
+
+/* Make the collapsed ToC header render white on gray also when it's a link */
+@media screen and (max-width: 1023px) {
+  #toc h2 a,
+  #toc h2 a:link,
+  #toc h2 a:focus,
+  #toc h2 a:hover,
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+}
+
+/* Give the bottom of the ToC some whitespace */
+@media screen and (min-width: 1024px) {
+  #toc {
+    padding: 0 0 1em 1em;
+  }
+}
+
+/* Style section numbers with more space between number and title */
+.section-number {
+  padding-right: 0.5em;
+}
+
+/* prevent monospace from becoming overly large */
+tt, code, pre {
+  font-size: 95%;
+}
+
+/* Fix the height/width aspect for ascii art*/
+.sourcecode pre,
+.art-text pre {
+  line-height: 1.12;
+}
+
+
+/* Add styling for a link in the ToC that points to the top of the document */
+a.toplink {
+  float: right;
+  margin-right: 0.5em;
+}
+
+/* Fix the dl styling to match the RFC 7992 attributes */
+dl > dt,
+dl.dlParallel > dt {
+  float: left;
+  margin-right: 1em;
+}
+dl.dlNewline > dt {
+  float: none;
+}
+
+/* Provide styling for table cell text alignment */
+table td.text-left,
+table th.text-left {
+  text-align: left;
+}
+table td.text-center,
+table th.text-center {
+  text-align: center;
+}
+table td.text-right,
+table th.text-right {
+  text-align: right;
+}
+
+/* Make the alternative author contact information look less like just another
+   author, and group it closer with the primary author contact information */
+.alternative-contact {
+  margin: 0.5em 0 0.25em 0;
+}
+address .non-ascii {
+  margin: 0 0 0 2em;
+}
+
+/* With it being possible to set tables with alignment
+  left, center, and right, { width: 100%; } does not make sense */
+table {
+  width: auto;
+}
+
+/* Avoid reference text that sits in a block with very wide left margin,
+   because of a long floating dt label.*/
+.references dd {
+  overflow: visible;
+}
+
+/* Control caption placement */
+caption {
+  caption-side: bottom;
+}
+
+/* Limit the width of the author address vcard, so names in right-to-left
+   script don't end up on the other side of the page. */
+
+address.vcard {
+  max-width: 30em;
+  margin-right: auto;
+}
+
+/* For address alignment dependent on LTR or RTL scripts */
+address div.left {
+  text-align: left;
+}
+address div.right {
+  text-align: right;
+}
+
+/* Provide table alignment support.  We can't use the alignX classes above
+   since they do unwanted things with caption and other styling. */
+table.right {
+ margin-left: auto;
+ margin-right: 0;
+}
+table.center {
+ margin-left: auto;
+ margin-right: auto;
+}
+table.left {
+ margin-left: 0;
+ margin-right: auto;
+}
+
+/* Give the table caption label the same styling as the figcaption */
+caption a[href] {
+  color: #222;
+}
+
+@media print {
+  .toplink {
+    display: none;
+  }
+
+  /* avoid overwriting the top border line with the ToC header */
+  #toc {
+    padding-top: 1px;
+  }
+
+  /* Avoid page breaks inside dl and author address entries */
+  .vcard {
+    page-break-inside: avoid;
+  }
+
+}
+/* Tweak the bcp14 keyword presentation */
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+/* Tweak the invisible space above H* in order not to overlay links in text above */
+ h2 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 31px;
+ }
+ h3 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+ h4 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+/* Float artwork pilcrow to the right */
+@media screen {
+  .artwork a.pilcrow {
+    display: block;
+    line-height: 0.7;
+    margin-top: 0.15em;
+  }
+}
+/* Make pilcrows on dd visible */
+@media screen {
+  dd:hover > a.pilcrow {
+    visibility: visible;
+  }
+}
+/* Make the placement of figcaption match that of a table's caption
+   by removing the figure's added bottom margin */
+.alignLeft.art-text,
+.alignCenter.art-text,
+.alignRight.art-text {
+   margin-bottom: 0;
+}
+.alignLeft,
+.alignCenter,
+.alignRight {
+  margin: 1em 0 0 0;
+}
+/* In print, the pilcrow won't show on hover, so prevent it from taking up space,
+   possibly even requiring a new line */
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+/* Styling for the external metadata */
+div#external-metadata {
+  background-color: #eee;
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  display: none;
+}
+div#internal-metadata {
+  padding: 0.5em;                       /* to match the external-metadata padding */
+}
+/* Styling for title RFC Number */
+h1#rfcnum {
+  clear: both;
+  margin: 0 0 -1em;
+  padding: 1em 0 0 0;
+}
+/* Make .olPercent look the same as <ol><li> */
+dl.olPercent > dd {
+  margin-bottom: 0.25em;
+  min-height: initial;
+}
+/* Give aside some styling to set it apart */
+aside {
+  border-left: 1px solid #ddd;
+  margin: 1em 0 1em 2em;
+  padding: 0.2em 2em;
+}
+aside > dl,
+aside > ol,
+aside > ul,
+aside > table,
+aside > p {
+  margin-bottom: 0.5em;
+}
+/* Additional page break settings */
+@media print {
+  figcaption, table caption {
+    page-break-before: avoid;
+  }
+  table {
+    page-break-inside: avoid;
+  }
+}
+/* Font size adjustments for print */
+@media print {
+  body  { font-size: 10pt;      line-height: normal; max-width: 96%; }
+  h1    { font-size: 1.72em;    padding-top: 1.5em; } /* 1*1.2*1.2*1.2 */
+  h2    { font-size: 1.44em;    padding-top: 1.5em; } /* 1*1.2*1.2 */
+  h3    { font-size: 1.2em;     padding-top: 1.5em; } /* 1*1.2 */
+  h4    { font-size: 1em;       padding-top: 1.5em; }
+  h5, h6 { font-size: 1em;      margin: initial; padding: 0.5em 0 0.3em; }
+}
+/* Sourcecode margin in print, when there's no pilcrow */
+@media print {
+  .artwork,
+  .artwork > pre,
+  .sourcecode {
+    margin-bottom: 1em;
+  }
+}
+/* Avoid narrow tables forcing too narrow table captions, which may render badly */
+table {
+  min-width: 20em;
+}
+/* ol type a */
+ol.type-a { list-style-type: lower-alpha; }
+ol.type-A { list-style-type: upper-alpha; }
+ol.type-i { list-style-type: lower-roman; }
+ol.type-I { list-style-type: upper-roman; }
+/* Apply the print table and row borders in general, on request from the RPC,
+and increase the contrast between border and odd row background slightly */
+table {
+  border: 1px solid #ddd;
+}
+td {
+  border-top: 1px solid #ddd;
+}
+tr {
+  break-inside: avoid;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f8f8f8;
+}
+/* Use style rules to govern display of the TOC. */
+@media screen and (max-width: 1023px) {
+  #toc nav { display: none; }
+  #toc.active nav { display: block; }
+}
+/* Add support for keepWithNext */
+.keepWithNext {
+  break-after: avoid-page;
+  break-after: avoid-page;
+}
+/* Add support for keepWithPrevious */
+.keepWithPrevious {
+  break-before: avoid-page;
+}
+/* Change the approach to avoiding breaks inside artwork etc. */
+figure, pre, table, .artwork, .sourcecode  {
+  break-before: auto;
+  break-after: auto;
+}
+/* Avoid breaks between <dt> and <dd> */
+dl {
+  break-before: auto;
+  break-inside: auto;
+}
+dt {
+  break-before: auto;
+  break-after: avoid-page;
+}
+dd {
+  break-before: avoid-page;
+  break-after: auto;
+  orphans: 3;
+  widows: 3
+}
+span.break, dd.break {
+  margin-bottom: 0;
+  min-height: 0;
+  break-before: auto;
+  break-inside: auto;
+  break-after: auto;
+}
+/* Undo break-before ToC */
+@media print {
+  #toc {
+    break-before: auto;
+  }
+}
+/* Text in compact lists should not get extra bottom margin space,
+   since that would makes the list not compact */
+ul.compact p, .ulCompact p,
+ol.compact p, .olCompact p {
+ margin: 0;
+}
+/* But the list as a whole needs the extra space at the end */
+section ul.compact,
+section .ulCompact,
+section ol.compact,
+section .olCompact {
+  margin-bottom: 1em;                    /* same as p not within ul.compact etc. */
+}
+/* The tt and code background above interferes with for instance table cell
+   backgrounds.  Changed to something a bit more selective. */
+tt, code {
+  background-color: transparent;
+}
+p tt, p code, li tt, li code, dt tt, dt code {
+  background-color: #f8f8f8;
+}
+/* Tweak the pre margin -- 0px doesn't come out well */
+pre {
+   margin-top: 0.5px;
+}
+/* Tweak the compact list text */
+ul.compact, .ulCompact,
+ol.compact, .olCompact,
+dl.compact, .dlCompact {
+  line-height: normal;
+}
+/* Don't add top margin for nested lists */
+li > ul, li > ol, li > dl,
+dd > ul, dd > ol, dd > dl,
+dl > dd > dl {
+  margin-top: initial;
+}
+/* Elements that should not be rendered on the same line as a <dt> */
+/* This should match the element list in writer.text.TextWriter.render_dl() */
+dd > div.artwork:first-child,
+dd > aside:first-child,
+dd > blockquote:first-child,
+dd > figure:first-child,
+dd > ol:first-child,
+dd > div.sourcecode:first-child,
+dd > table:first-child,
+dd > ul:first-child {
+  clear: left;
+}
+/* fix for weird browser behaviour when <dd/> is empty */
+dt+dd:empty::before{
+  content: "\00a0";
+}
+/* Make paragraph spacing inside <li> smaller than in body text, to fit better within the list */
+li > p {
+  margin-bottom: 0.5em
+}
+/* Don't let p margin spill out from inside list items */
+li > p:last-of-type:only-child {
+  margin-bottom: 0;
+}
+</style>
+<link href="rfc-local.css" rel="stylesheet" type="text/css">
+<script type="application/javascript">async function addMetadata(){try{const e=document.styleSheets[0].cssRules;for(let t=0;t<e.length;t++)if(/#identifiers/.exec(e[t].selectorText)){const a=e[t].cssText.replace("#identifiers","#external-updates");document.styleSheets[0].insertRule(a,document.styleSheets[0].cssRules.length)}}catch(e){console.log(e)}const e=document.getElementById("external-metadata");if(e)try{var t,a="",o=function(e){const t=document.getElementsByTagName("meta");for(let a=0;a<t.length;a++)if(t[a].getAttribute("name")===e)return t[a].getAttribute("content");return""}("rfc.number");if(o){t="https://www.rfc-editor.org/rfc/rfc"+o+".json";try{const e=await fetch(t);a=await e.json()}catch(e){t=document.URL.indexOf("html")>=0?document.URL.replace(/html$/,"json"):document.URL+".json";const o=await fetch(t);a=await o.json()}}if(!a)return;e.style.display="block";const s="",d="https://datatracker.ietf.org/doc",n="https://datatracker.ietf.org/ipr/search",c="https://www.rfc-editor.org/info",l=a.doc_id.toLowerCase(),i=a.doc_id.slice(0,3).toLowerCase(),f=a.doc_id.slice(3).replace(/^0+/,""),u={status:"Status",obsoletes:"Obsoletes",obsoleted_by:"Obsoleted By",updates:"Updates",updated_by:"Updated By",see_also:"See Also",errata_url:"Errata"};let h="<dl style='overflow:hidden' id='external-updates'>";["status","obsoletes","obsoleted_by","updates","updated_by","see_also","errata_url"].forEach(e=>{if("status"==e){a[e]=a[e].toLowerCase();var t=a[e].split(" "),o=t.length,w="",p=1;for(let e=0;e<o;e++)p<o?w=w+r(t[e])+" ":w+=r(t[e]),p++;a[e]=w}else if("obsoletes"==e||"obsoleted_by"==e||"updates"==e||"updated_by"==e){var g,m="",b=1;g=a[e].length;for(let t=0;t<g;t++)a[e][t]&&(a[e][t]=String(a[e][t]).toLowerCase(),m=b<g?m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>, ":m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>",b++);a[e]=m}else if("see_also"==e){var y,L="",C=1;y=a[e].length;for(let t=0;t<y;t++)if(a[e][t]){a[e][t]=String(a[e][t]);var _=a[e][t].slice(0,3),v=a[e][t].slice(3).replace(/^0+/,"");L=C<y?"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>, ":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>, ":"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>",C++}a[e]=L}else if("errata_url"==e){var R="";R=a[e]?R+"<a href='"+a[e]+"'>Errata exist</a> | <a href='"+d+"/"+l+"'>Datatracker</a>| <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>":"<a href='"+d+"/"+l+"'>Datatracker</a> | <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>",a[e]=R}""!=a[e]?"Errata"==u[e]?h+=`<dt>More info:</dt><dd>${a[e]}</dd>`:h+=`<dt>${u[e]}:</dt><dd>${a[e]}</dd>`:"Errata"==u[e]&&(h+=`<dt>More info:</dt><dd>${a[e]}</dd>`)}),h+="</dl>",e.innerHTML=h}catch(e){console.log(e)}else console.log("Could not locate metadata <div> element");function r(e){return e.charAt(0).toUpperCase()+e.slice(1)}}window.removeEventListener("load",addMetadata),window.addEventListener("load",addMetadata);</script>
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">PQCHC</td>
+<td class="right">August 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Vicente</td>
+<td class="center">Expires 17 February 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Limited Additional Mechanisms for PKIX and SMIME</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-vicente-lamps-pqchc-04</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-08-16" class="published">16 August 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-02-17">17 February 2027</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">B. Vicente</div>
+<div class="org">Sanctum SecOps LLC</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">PQC Hybrid Commitment (PQCHC) X.509 v3 Extension</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">
+        This document defines the PQC Hybrid Commitment (PQCHC) X.509 v3 extension,
+        a non-critical certificate extension that records a cryptographic commitment
+        to a post-quantum algorithm migration schedule directly in an X.509 certificate.
+        The commitment allows relying parties to verify, at certificate validation time,
+        that the issuing CA has made a binding, verifiable declaration of its PQC
+        migration timeline.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">
+        This revision (-03) clarifies differentiation from composite-signature schemes
+        (draft-ietf-lamps-pq-composite-sigs, draft-ietf-lamps-cert-binding-for-multi-auth)
+        and adds a Posture B IPR notice. The PQCHC extension encodes a commitment to
+        future algorithm agility — it is not itself a composite signature scheme and
+        does not alter the primary signature algorithm of the certificate.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-supplementary-materials">
+<a href="#name-supplementary-materials" class="section-name selfRef">Supplementary Materials</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        Reference implementation: CygnetLib
+        (<a href="https://github.com/sanctumsecopsmssp/CygnetLib">https://github.com/sanctumsecopsmssp/CygnetLib</a>).
+        JSON evidence: algorithm registry, CNSA 2.0 compliance matrix, IETF PQC
+        interoperability status, and ACTV test vectors are in the
+        <code>evidence/</code> directory.
+        CAGE/NCAGE: 20XS3. Apex website:
+        <a href="https://www.sanctumsecops.com/">https://www.sanctumsecops.com/</a>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.2">
+      <h2 id="name-source-and-archival">
+<a href="#name-source-and-archival" class="section-name selfRef">Source and Archival</a>
+      </h2>
+<p id="section-note.2-1">This note is to be removed before publishing as an RFC.<a href="#section-note.2-1" class="pilcrow">¶</a></p>
+<p id="section-note.2-2">
+        Source for this draft is maintained at
+        <a href="https://github.com/Sanc-Admin/lamps-pqchc">https://github.com/Sanc-Admin/lamps-pqchc</a>.
+        Author ORCID iD: <a href="https://orcid.org/0009-0006-6395-5308">https://orcid.org/0009-0006-6395-5308</a>.<a href="#section-note.2-2" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.3">
+      <h2 id="name-ipr-considerations">
+<a href="#name-ipr-considerations" class="section-name selfRef">IPR Considerations</a>
+      </h2>
+<p id="section-note.3-1">This note is to be removed before publishing as an RFC.<a href="#section-note.3-1" class="pilcrow">¶</a></p>
+<p id="section-note.3-2">
+        Sanctum IP Co (a Delaware corporation, assignee of Sanctum SecOps LLC) holds or
+        intends to file patent or other intellectual property rights covering subject matter described in this
+        document, including the PQCHC commitment structure, the schedule-binding
+        mechanism, and the relying-party validation procedure. The public disclosure
+        of this Internet-Draft constitutes prior art as of its submission date with
+        respect to the specific combination of features described herein. By posting
+        this Internet-Draft, the author submits to the IETF Trust the rights described in BCP 78 and BCP 79.
+        All intellectual property described in this document is owned by Sanctum IP Co,
+        128 Dry Run Rd, Pine City, NY 14871. Contact: brian@sso-labs.com. Implementers MUST consult the IETF
+        Datatracker IPR page for this document before implementation.<a href="#section-note.3-2" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 17 February 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-motivation" class="internal xref">Motivation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-differentiation-from-adjace" class="internal xref">Differentiation from Adjacent Work</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-pqchc-extension-definition" class="internal xref">PQCHC Extension Definition</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-object-identifier" class="internal xref">Object Identifier</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-syntax" class="internal xref">Syntax</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-criticality" class="internal xref">Criticality</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-relying-party-validation-pr" class="internal xref">Relying Party Validation Procedure</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-requirements" class="internal xref">Requirements</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-commitment-binding-strength" class="internal xref">Commitment Binding Strength</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-migration-date-enforcement" class="internal xref">Migration Date Enforcement</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-classical-signature-on-comm" class="internal xref">Classical Signature on Commitment</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-acknowledgements" class="internal xref">Acknowledgements</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<div id="motivation">
+<section id="section-1.1">
+        <h3 id="name-motivation">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-motivation" class="section-name selfRef">Motivation</a>
+        </h3>
+<p id="section-1.1-1">
+          X.509 certificates today carry no verifiable declaration of the issuing CA's
+          post-quantum migration timeline. Relying parties that require PQC-ready
+          certificate chains have no mechanism to distinguish CAs that have committed
+          to a migration schedule from those that have not, without out-of-band policy
+          documents that are not machine-verifiable at certificate validation time.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-2">
+          NIST FIPS 204 (ML-DSA) <span>[<a href="#FIPS204" class="cite xref">FIPS204</a>]</span> and FIPS 205 (SLH-DSA)
+          <span>[<a href="#FIPS205" class="cite xref">FIPS205</a>]</span> define the primary post-quantum digital signature
+          algorithms. The PQCHC extension provides a certificate-embedded, cryptographically
+          bound record of when and how the issuing CA commits to transitioning to these
+          or other NIST-approved PQC algorithms.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="differentiation">
+<section id="section-1.2">
+        <h3 id="name-differentiation-from-adjace">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-differentiation-from-adjace" class="section-name selfRef">Differentiation from Adjacent Work</a>
+        </h3>
+<p id="section-1.2-1">
+          PQCHC is <strong>not</strong> a composite-signature scheme. It does not define a new
+          signature algorithm, does not modify the <code>signatureAlgorithm</code> field of the
+          certificate, and does not require dual signing. It is a non-critical v3 extension
+          carrying a structured commitment object. This differentiates it explicitly from:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.2-2.1">
+            <p id="section-1.2-2.1.1"><strong>draft-ietf-lamps-pq-composite-sigs</strong>: Defines a composite
+          public key and composite signature algorithm combining classical and PQC
+          algorithms in a single AlgorithmIdentifier. PQCHC carries no composite
+          signature; it carries a commitment to future migration.<a href="#section-1.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.2-2.2">
+            <p id="section-1.2-2.2.1"><strong>draft-ietf-lamps-cert-binding-for-multi-auth</strong>: Defines
+          certificate binding for multi-algorithm authentication, enabling a relying
+          party to require proof of possession of multiple algorithm-specific keys.
+          PQCHC does not define multi-auth binding; it records a CA's migration
+          commitment as a non-critical extension.<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-1.2-3">
+          The PQCHC extension is complementary to composite-signature and multi-auth
+          binding schemes: a CA may issue a certificate with both a composite signature
+          algorithm and a PQCHC extension, using the PQCHC extension to record the
+          schedule for full PQC-only migration once composite-signature support is
+          established in the relying-party ecosystem.<a href="#section-1.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="conventions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">
+        The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+        "OPTIONAL" in this document are to be interpreted as described in
+        BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+        appear in all capitals as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlNewline" id="section-2-2">
+        <dt id="section-2-2.1">Migration Commitment:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.2">A structured, cryptographically signed declaration by a CA specifying
+        the target PQC algorithm family, the planned migration date, and a
+        commitment hash binding the declaration to the certificate.<a href="#section-2-2.2" class="pilcrow">¶</a>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.3">PQCHC Extension:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.4">The X.509 v3 non-critical extension defined in this document carrying
+        a Migration Commitment.<a href="#section-2-2.4" class="pilcrow">¶</a>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.5">Commitment Hash:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.6">A hash binding the Migration Commitment to the certificate's
+        <code>tbsCertificate</code> structure, preventing substitution of the commitment
+        across certificates.<a href="#section-2-2.6" class="pilcrow">¶</a>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.7">Target Algorithm Family:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.8">The NIST-approved PQC algorithm to which the CA commits to migrate,
+        identified by OID. RECOMMENDED values: id-ML-DSA (FIPS 204),
+        id-SLH-DSA (FIPS 205).<a href="#section-2-2.8" class="pilcrow">¶</a>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="extension">
+<section id="section-3">
+      <h2 id="name-pqchc-extension-definition">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-pqchc-extension-definition" class="section-name selfRef">PQCHC Extension Definition</a>
+      </h2>
+<div id="ext-oid">
+<section id="section-3.1">
+        <h3 id="name-object-identifier">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-object-identifier" class="section-name selfRef">Object Identifier</a>
+        </h3>
+<p id="section-3.1-1">
+          The PQCHC extension is identified by the following OID (to be assigned
+          by IANA or designated expert; placeholder used until assignment):<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<div class="lang-asn1 sourcecode" id="section-3.1-2">
+<pre>
+id-ce-pqchc OBJECT IDENTIFIER ::= { id-ce TBD }
+</pre><a href="#section-3.1-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="ext-syntax">
+<section id="section-3.2">
+        <h3 id="name-syntax">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-syntax" class="section-name selfRef">Syntax</a>
+        </h3>
+<div class="lang-asn1 sourcecode" id="section-3.2-1">
+<pre>
+PQCHCExtension ::= SEQUENCE {
+    version            INTEGER DEFAULT 1,
+    targetAlgFamily    AlgorithmIdentifier,
+    migrationDate      GeneralizedTime,
+    commitmentHash     OCTET STRING,
+    commitmentHashAlg  AlgorithmIdentifier,
+    issuerSig          BIT STRING OPTIONAL
+}
+</pre><a href="#section-3.2-1" class="pilcrow">¶</a>
+</div>
+<span class="break"></span><dl class="dlNewline" id="section-3.2-2">
+          <dt id="section-3.2-2.1">version:</dt>
+          <dd style="margin-left: 1.5em" id="section-3.2-2.2">Version of the PQCHC structure. This document defines version 1.<a href="#section-3.2-2.2" class="pilcrow">¶</a>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-3.2-2.3">targetAlgFamily:</dt>
+          <dd style="margin-left: 1.5em" id="section-3.2-2.4">AlgorithmIdentifier identifying the target PQC algorithm. MUST be
+          a NIST-approved PQC algorithm OID per FIPS 204 or FIPS 205.<a href="#section-3.2-2.4" class="pilcrow">¶</a>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-3.2-2.5">migrationDate:</dt>
+          <dd style="margin-left: 1.5em" id="section-3.2-2.6">The date by which the CA commits to complete migration to the
+          target algorithm family for new certificate issuance. MUST be a
+          future date at time of certificate issuance. SHOULD NOT be more
+          than 5 years from the certificate's notBefore date.<a href="#section-3.2-2.6" class="pilcrow">¶</a>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-3.2-2.7">commitmentHash:</dt>
+          <dd style="margin-left: 1.5em" id="section-3.2-2.8">Hash of the DER encoding of the certificate's <code>tbsCertificate</code>
+          structure, computed using the algorithm identified in
+          <code>commitmentHashAlg</code>. Binds the commitment to this specific
+          certificate.<a href="#section-3.2-2.8" class="pilcrow">¶</a>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-3.2-2.9">commitmentHashAlg:</dt>
+          <dd style="margin-left: 1.5em" id="section-3.2-2.10">AlgorithmIdentifier for the hash algorithm used in
+          <code>commitmentHash</code>. MUST be SHA-256 or stronger.<a href="#section-3.2-2.10" class="pilcrow">¶</a>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-3.2-2.11">issuerSig:</dt>
+          <dd style="margin-left: 1.5em" id="section-3.2-2.12">OPTIONAL. A signature over the DER encoding of the remaining
+          PQCHC fields using the CA's private key. When present, allows
+          relying parties to verify the commitment without re-verifying the
+          full certificate chain. MAY use the CA's current (classical)
+          signing key or a PQC signing key.<a href="#section-3.2-2.12" class="pilcrow">¶</a>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="ext-criticality">
+<section id="section-3.3">
+        <h3 id="name-criticality">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-criticality" class="section-name selfRef">Criticality</a>
+        </h3>
+<p id="section-3.3-1">
+          The PQCHC extension MUST be marked non-critical. Relying parties that
+          do not implement PQCHC MUST ignore the extension per <span>[<a href="#RFC5280" class="cite xref">RFC5280</a>]</span>
+          Section 4.2. This ensures backward compatibility with existing certificate
+          validation implementations.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="validation">
+<section id="section-4">
+      <h2 id="name-relying-party-validation-pr">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-relying-party-validation-pr" class="section-name selfRef">Relying Party Validation Procedure</a>
+      </h2>
+<p id="section-4-1">
+        A relying party that implements PQCHC validation SHOULD:<a href="#section-4-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4-2">
+        <li id="section-4-2.1">Locate the PQCHC extension by OID in the certificate's v3 extensions.<a href="#section-4-2.1" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-2.2">Verify that <code>commitmentHashAlg</code> is an acceptable hash algorithm.<a href="#section-4-2.2" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-2.3">Compute the hash of the certificate's <code>tbsCertificate</code> DER encoding
+        using <code>commitmentHashAlg</code>.<a href="#section-4-2.3" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-2.4">Verify that the computed hash equals <code>commitmentHash</code>.<a href="#section-4-2.4" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-2.5">If <code>issuerSig</code> is present, verify the signature over the remaining
+        PQCHC fields.<a href="#section-4-2.5" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-2.6">Evaluate <code>migrationDate</code> against deployment policy: if the
+        <code>migrationDate</code> has passed without CA migration, the relying party
+        MAY treat the commitment as violated and apply policy-defined consequences
+        (e.g., elevated audit logging, rejection of new certificates from that CA).<a href="#section-4-2.6" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-2.7">Evaluate <code>targetAlgFamily</code> against deployment policy to confirm
+        the committed algorithm is acceptable.<a href="#section-4-2.7" class="pilcrow">¶</a>
+</li>
+      </ol>
+</section>
+</div>
+<div id="requirements">
+<section id="section-5">
+      <h2 id="name-requirements">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-requirements" class="section-name selfRef">Requirements</a>
+      </h2>
+<p id="section-5-1"><strong>REQ-PQCHC-1: Non-Critical Extension.</strong>
+      The PQCHC extension MUST be non-critical.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-2"><strong>REQ-PQCHC-2: NIST-Approved Target Algorithm.</strong>
+      The <code>targetAlgFamily</code> MUST identify a NIST-approved PQC signature algorithm.<a href="#section-5-2" class="pilcrow">¶</a></p>
+<p id="section-5-3"><strong>REQ-PQCHC-3: Future Migration Date.</strong>
+      The <code>migrationDate</code> MUST be a date after the certificate's <code>notBefore</code> at
+      issuance time.<a href="#section-5-3" class="pilcrow">¶</a></p>
+<p id="section-5-4"><strong>REQ-PQCHC-4: Commitment Hash Binding.</strong>
+      The <code>commitmentHash</code> MUST be computed over the DER encoding of the
+      certificate's <code>tbsCertificate</code>.<a href="#section-5-4" class="pilcrow">¶</a></p>
+<p id="section-5-5"><strong>REQ-PQCHC-5: Backward Compatibility.</strong>
+      The extension MUST NOT cause validation failure on non-implementing relying
+      parties. The non-critical marking satisfies this requirement.<a href="#section-5-5" class="pilcrow">¶</a></p>
+<p id="section-5-6"><strong>REQ-PQCHC-6: No Composite Signature Alteration.</strong>
+      The PQCHC extension MUST NOT alter the <code>signatureAlgorithm</code> field or
+      the primary signature of the certificate. It is informational commitment
+      metadata only.<a href="#section-5-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security">
+<section id="section-6">
+      <h2 id="name-security-considerations">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<div id="sec-commitment-binding">
+<section id="section-6.1">
+        <h3 id="name-commitment-binding-strength">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-commitment-binding-strength" class="section-name selfRef">Commitment Binding Strength</a>
+        </h3>
+<p id="section-6.1-1">
+          The <code>commitmentHash</code> binds the Migration Commitment to a specific
+          certificate. An attacker who can forge the hash can substitute a different
+          commitment into a certificate. The hash algorithm MUST be SHA-256 or
+          stronger to prevent preimage and collision attacks against the binding.
+          In PQC-capable deployments, SHA-3 (SHAKE256) is RECOMMENDED.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-migration-date-enforcement">
+<section id="section-6.2">
+        <h3 id="name-migration-date-enforcement">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-migration-date-enforcement" class="section-name selfRef">Migration Date Enforcement</a>
+        </h3>
+<p id="section-6.2-1">
+          The PQCHC extension is informational — it records a commitment but does
+          not enforce it. Enforcement is a matter of relying-party policy and
+          ecosystem governance. Deployments SHOULD define policy consequences for
+          CAs that issue certificates past their committed <code>migrationDate</code>
+          without completing migration, such as CA-audit flags or trust anchor
+          removal procedures.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-classical-sig">
+<section id="section-6.3">
+        <h3 id="name-classical-signature-on-comm">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-classical-signature-on-comm" class="section-name selfRef">Classical Signature on Commitment</a>
+        </h3>
+<p id="section-6.3-1">
+          If <code>issuerSig</code> uses a classical (non-PQC) signing key, the commitment
+          signature provides no quantum resistance. In a post-CRQC environment, the
+          commitment's authenticity would rely solely on the certificate chain
+          validation, not the <code>issuerSig</code> field. CAs operating in high-assurance
+          environments SHOULD sign the commitment with a PQC key even before migrating
+          the primary certificate signature algorithm.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana">
+<section id="section-7">
+      <h2 id="name-iana-considerations">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-7-1">
+        This document requests assignment of an OID arc for the id-ce-pqchc extension
+        from IANA's SMI Security for PKIX Certificate Extension registry, or from a
+        designated expert under the id-ce arc. The placeholder TBD in the ASN.1 module
+        will be replaced with the assigned value upon registration.<a href="#section-7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<section id="section-8">
+      <h2 id="name-normative-references">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+      </h2>
+<dl class="references">
+<dt id="RFC2119">[RFC2119]</dt>
+      <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC5280">[RFC5280]</dt>
+      <dd>
+<span class="refAuthor">Cooper, D.</span>, <span class="refAuthor">Santesson, S.</span>, <span class="refAuthor">Farrell, S.</span>, <span class="refAuthor">Boeyen, S.</span>, <span class="refAuthor">Housley, R.</span>, and <span class="refAuthor">W. Polk</span>, <span class="refTitle">"Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile"</span>, <span class="seriesInfo">RFC 5280</span>, <span class="seriesInfo">DOI 10.17487/RFC5280</span>, <time datetime="2008-05" class="refDate">May 2008</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc5280">https://www.rfc-editor.org/info/rfc5280</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+    <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8174">https://www.rfc-editor.org/info/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+<section id="section-9">
+      <h2 id="name-informative-references">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+      </h2>
+<dl class="references">
+<dt id="FIPS204">[FIPS204]</dt>
+      <dd>
+<span class="refAuthor">NIST</span>, <span class="refTitle">"Module-Lattice-Based Digital Signature Standard"</span>, <span class="seriesInfo">FIPS 204</span>, <time datetime="2024-08" class="refDate">August 2024</time>. </dd>
+<dd class="break"></dd>
+<dt id="FIPS205">[FIPS205]</dt>
+    <dd>
+<span class="refAuthor">NIST</span>, <span class="refTitle">"Stateless Hash-Based Digital Signature Standard"</span>, <span class="seriesInfo">FIPS 205</span>, <time datetime="2024-08" class="refDate">August 2024</time>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+<div id="acknowledgements">
+<section id="appendix-A">
+      <h2 id="name-acknowledgements">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-acknowledgements" class="section-name selfRef">Acknowledgements</a>
+      </h2>
+<p id="appendix-A-1">
+        The author thanks Mike Ounsworth (Entrust) for valuable feedback on
+        draft structure and boilerplate compliance, and the IETF PQUIP, LAMPS,
+        and OAuth working groups for their ongoing work on post-quantum
+        cryptography standardization.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-2">
+        CygnetLib (<a href="https://github.com/sanctumsecopsmssp/CygnetLib">https://github.com/sanctumsecopsmssp/CygnetLib</a>)
+        serves as the reference implementation for algorithms described in this
+        document. JSON evidence files including the algorithm registry, CNSA 2.0
+        compliance matrix, IETF PQC interoperability status, and ACTV test
+        vector results are available in the
+        <code>evidence/</code> directory of the CygnetLib repository.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-B">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Brian Vicente</span></div>
+<div dir="auto" class="left"><span class="org">Sanctum SecOps LLC</span></div>
+<div dir="auto" class="left">
+<span class="locality">Pine City</span>, <span class="region">NY</span> </div>
+<div dir="auto" class="left"><span class="country-name">United States of America</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:bvicente@sanctumsecops.com" class="email">bvicente@sanctumsecops.com</a>
+</div>
+<div class="url">
+<span>URI:</span>
+<a href="https://orcid.org/0009-0006-6395-5308" class="url">https://orcid.org/0009-0006-6395-5308</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
