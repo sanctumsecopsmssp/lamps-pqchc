@@ -1,14 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE rfc [
-  <!ENTITY nbsp "&#160;">
+<!ENTITY nbsp "&#160;">
 ]>
-<rfc xmlns:xi="http://www.w3.org/2001/XInclude"
-     category="info"
-     docName="draft-vicente-lamps-rotation-envelope-03"
-     ipr="trust200902"
-     submissionType="IETF"
-     xml:lang="en"
-     version="3">
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" category="info" docName="draft-vicente-lamps-rotation-envelope-03" ipr="trust200902" submissionType="IETF" xml:lang="en" version="3">
 
   <front>
     <title abbrev="PQ-Rotation-Envelope">CA-Side Post-Quantum Rotation Envelope for X.509 Issuance Continuity</title>
@@ -24,7 +18,7 @@
       </address>
     </author>
 
-    <date year="2026" month="August" day="16"/>
+    <date/>
 
     <area>Security</area>
     <workgroup>Limited Additional Mechanisms for PKIX and SMIME</workgroup>
@@ -121,7 +115,7 @@ issuance capability (this document).</t>
           <t>
         All intellectual property described in this document is owned by
         Sanctum IP Co, 128 Dry Run Rd, Pine City, NY 14871.
-        Contact: brian@sso-labs.com.
+        Contact: bvicente@sanctumsecops.com.
       </t>
 </note>
 
@@ -135,16 +129,10 @@ places a CA-side Rotation Envelope extension in CA-issued
 certificates, binding a hash of a CA-published, signed manifest of
 issuance-continuity commitments across the CA's own key rotations.
 The two mechanisms answer different questions:
-<list style="symbols">
-  <t>draft-reddy answers "Will the subject still present a PQ
-  certificate next time?"</t>
-  <t>This document answers "Will the issuing CA still be capable of,
-  and committed to, signing a PQ certificate at the next renewal?"</t>
-</list>
-Both signals are required for end-to-end PQ migration assurance and
-SHOULD be deployed together.  No ASN.1, OID, or wire-format collision
-exists between the two extensions.</t>
-    </note>
+</t>
+    <ul><li>draft-reddy answers "Will the subject still present a PQ
+  certificate next time?"</li><li>This document answers "Will the issuing CA still be capable of,
+  and committed to, signing a PQ certificate at the next renewal?"</li></ul></note>
 
   </front>
 
@@ -562,7 +550,7 @@ Section 3 definitions).</t>
 
       <section anchor="asn1-module">
         <name>ASN.1 Module</name>
-        <sourcecode type="asn.1"><![CDATA[
+        <sourcecode type="asn.1">
 PQ-Rotation-Envelope-2026
   { iso(1) identified-organization(3) dod(6) internet(1)
     security(5) mechanisms(5) pkix(7) id-mod(0) TBD1 }
@@ -597,7 +585,8 @@ ext-PQRotationEnvelope EXTENSION ::= {
 
 PQRotationEnvelope ::= SEQUENCE {
     envelopeValid      BOOLEAN,
-    envelopeCommittedAlgorithmSet   AlgorithmIdentifier { ALGORITHM, {...} },
+    envelopeCommittedAlgorithmSet
+        AlgorithmIdentifier { ALGORITHM, {...} },
     futureKeyCommitment  EnvelopeManifestReference OPTIONAL,
     envelopeNotAfter   GeneralizedTime,
     manifestURI            IA5String OPTIONAL
@@ -606,13 +595,15 @@ PQRotationEnvelope ::= SEQUENCE {
 -- Future Key Commitment Structure
 
 EnvelopeManifestReference ::= SEQUENCE {
-    hashAlgorithm        AlgorithmIdentifier { DIGEST-ALGORITHM, {...} },
+    hashAlgorithm
+        AlgorithmIdentifier { DIGEST-ALGORITHM, {...} },
     spkiHash             OCTET STRING,
-    keyAlgorithmHint     AlgorithmIdentifier { ALGORITHM, {...} } OPTIONAL
+    keyAlgorithmHint
+        AlgorithmIdentifier { ALGORITHM, {...} } OPTIONAL
 }
 
 END
-]]></sourcecode>
+</sourcecode>
       </section>
 
       <section anchor="field-definitions">
@@ -691,9 +682,9 @@ hashAlgorithm applied to the DER encoding of the full
 SubjectPublicKeyInfo that is intended to appear in the successor
 certificate.</t>
 
-            <sourcecode><![CDATA[
+            <sourcecode>
 spkiHash = Hash( hashAlgorithm, DER( future-SubjectPublicKeyInfo ) )
-]]></sourcecode>
+</sourcecode>
 
             <t>The DER encoding of SubjectPublicKeyInfo is taken over the complete
 ASN.1 structure including the AlgorithmIdentifier and the subjectPublicKey
@@ -908,17 +899,16 @@ Order SHOULD reference the predecessor certificate (by the
 {issuer, serial} identifier as defined in <xref target="RFC9773"/> Section 5).
 This allows the CA and relying parties to correlate the renewal
 with the outstanding commitment.</t></li>
-            <li><t><strong>PQ key validation at order time:</strong> A CA that receives an ACME Order
+            <li><t>This step is OPTIONAL for CAs that do not implement envelope-aware
+order validation, and it requires the CA to have access to the
+predecessor certificate — which is typically possible via the
+issuer's own certificate repository or the<strong>PQ key validation at order time:</strong> A CA that receives an ACME Order
 with a <tt>replaces</tt> field referencing a envelope-bearing predecessor
 certificate SHOULD verify that the SPKI in the new Order's CSR
 matches the spkiHash in the predecessor's EnvelopeManifestReference.  If
 the hash does not match, the CA SHOULD reject the Order with an
 appropriate error indicating a commitment mismatch.
-<vspace/>
-This step is OPTIONAL for CAs that do not implement envelope-aware
-order validation, and it requires the CA to have access to the
-predecessor certificate — which is typically possible via the
-issuer's own certificate repository or the <tt>replaces</tt> reference.</t></li>
+<tt>replaces</tt> reference.</t></li>
             <li><t><strong>Explanation URL:</strong> The CA MAY set the <tt>explanationURL</tt> field of
 the <tt>renewalInfo</tt> resource to the same URI as the manifestURI in the
 Rotation Envelope extension, providing consistent reference between the ACME
@@ -1144,9 +1134,9 @@ policy OIDs that attest to an operator's Rotation Envelope enrollment.</t>
         <t>IANA is requested to assign an Object Identifier for the Rotation Envelope extension
 under the id-pe arc:</t>
 
-        <sourcecode><![CDATA[
+        <sourcecode>
 id-pe-pq-rotation-envelope  OBJECT IDENTIFIER ::=  { id-pe TBD2 }
-]]></sourcecode>
+</sourcecode>
 
         <t>The base id-pe arc is <tt>1.3.6.1.5.5.7.1</tt> as defined in RFC 5280
 <xref target="RFC5280"/> Section 4.2.2.  The assigned id-pe value TBD2 will result
@@ -1155,9 +1145,10 @@ in a final OID of <tt>1.3.6.1.5.5.7.1.TBD2</tt>.</t>
         <t>IANA is also requested to assign an Object Identifier for the ASN.1
 module under the id-mod arc:</t>
 
-        <sourcecode><![CDATA[
-id-mod-pq-rotation-envelope-2026  OBJECT IDENTIFIER ::=  { id-mod TBD1 }
-]]></sourcecode>
+        <sourcecode>
+id-mod-pq-rotation-envelope-2026
+        OBJECT IDENTIFIER ::= { id-mod TBD1 }
+</sourcecode>
 
         <t>Both assignments are TBD pending IANA processing.</t>
       </section>
@@ -1168,16 +1159,16 @@ id-mod-pq-rotation-envelope-2026  OBJECT IDENTIFIER ::=  { id-mod TBD1 }
 experimental deployments of the Rotation Envelope extension may use OIDs under
 the IANA Private Enterprise Number (PEN) arc for Sanctum SecOps LLC:</t>
 
-        <sourcecode><![CDATA[
+        <sourcecode>
 1.3.6.1.4.1.65953
-]]></sourcecode>
+</sourcecode>
 
         <t>Specifically, the experimental arc for Rotation Envelope extensions is:</t>
 
-        <sourcecode><![CDATA[
+        <sourcecode>
 id-pe-pq-rotation-envelope-experimental  OBJECT IDENTIFIER ::=
     { 1 3 6 1 4 1 65953 1 1 }
-]]></sourcecode>
+</sourcecode>
 
         <t>This experimental OID MUST NOT be used in production deployments or
 in certificates submitted to public Certificate Transparency logs
@@ -1209,8 +1200,7 @@ id-pe assignment.</t>
             <date year="2024" month="August"/>
           </front>
           <seriesInfo name="NIST FIPS" value="203"/>
-          <format type="PDF" target="https://doi.org/10.6028/NIST.FIPS.203"/>
-        </reference>
+          </reference>
 
         <reference anchor="FIPS204">
           <front>
@@ -1219,8 +1209,7 @@ id-pe assignment.</t>
             <date year="2024" month="August"/>
           </front>
           <seriesInfo name="NIST FIPS" value="204"/>
-          <format type="PDF" target="https://doi.org/10.6028/NIST.FIPS.204"/>
-        </reference>
+          </reference>
 
         <reference anchor="FIPS205">
           <front>
@@ -1229,8 +1218,7 @@ id-pe assignment.</t>
             <date year="2024" month="August"/>
           </front>
           <seriesInfo name="NIST FIPS" value="205"/>
-          <format type="PDF" target="https://doi.org/10.6028/NIST.FIPS.205"/>
-        </reference>
+          </reference>
 
       </references>
 
@@ -1258,8 +1246,7 @@ id-pe assignment.</t>
             </author>
             <date year="2026" month="February" day="25"/>
           </front>
-          <format type="HTML" target="https://datatracker.ietf.org/doc/draft-reddy-lamps-x509-pq-commit/"/>
-        </reference>
+          </reference>
 
         <reference anchor="I-D.ounsworth-lamps-pq-external-pubkeys">
           <front>
@@ -1272,8 +1259,7 @@ id-pe assignment.</t>
             </author>
             <date year="2024"/>
           </front>
-          <format type="HTML" target="https://datatracker.ietf.org/doc/draft-ounsworth-lamps-pq-external-pubkeys/"/>
-        </reference>
+          </reference>
 
         <reference anchor="NIST-IR-8547">
           <front>
@@ -1282,8 +1268,7 @@ id-pe assignment.</t>
             <date year="2024" month="November"/>
           </front>
           <seriesInfo name="NIST IR" value="8547 ipd"/>
-          <format type="PDF" target="https://csrc.nist.gov/pubs/ir/8547/ipd"/>
-        </reference>
+          </reference>
 
         <reference anchor="CNSA2">
           <front>
@@ -1291,8 +1276,7 @@ id-pe assignment.</t>
             <author><organization>NSA</organization></author>
             <date year="2022" month="September"/>
           </front>
-          <format type="HTML" target="https://www.nsa.gov/Cybersecurity/Post-Quantum-Cybersecurity-Resources/"/>
-        </reference>
+          </reference>
 
         <reference anchor="FIPS180">
           <front>
@@ -1301,8 +1285,7 @@ id-pe assignment.</t>
             <date year="2015" month="August"/>
           </front>
           <seriesInfo name="NIST FIPS" value="180-4"/>
-          <format type="PDF" target="https://doi.org/10.6028/NIST.FIPS.180-4"/>
-        </reference>
+          </reference>
 
         <reference anchor="FIPS202">
           <front>
@@ -1311,8 +1294,7 @@ id-pe assignment.</t>
             <date year="2015" month="August"/>
           </front>
           <seriesInfo name="NIST FIPS" value="202"/>
-          <format type="PDF" target="https://doi.org/10.6028/NIST.FIPS.202"/>
-        </reference>
+          </reference>
 
         <reference anchor="SHOR1994">
           <front>
@@ -1321,8 +1303,7 @@ id-pe assignment.</t>
             <date year="1994"/>
           </front>
           <seriesInfo name="Proceedings of the 35th Annual Symposium on Foundations of Computer Science" value="pp. 124-134"/>
-          <format type="DOI" target="https://doi.org/10.1109/SFCS.1994.365700"/>
-        </reference>
+          </reference>
 
         <reference anchor="GROVER1996">
           <front>
@@ -1331,8 +1312,7 @@ id-pe assignment.</t>
             <date year="1996"/>
           </front>
           <seriesInfo name="Proceedings of the 28th Annual ACM Symposium on Theory of Computing" value="pp. 212-219"/>
-          <format type="DOI" target="https://doi.org/10.1145/237814.237866"/>
-        </reference>
+          </reference>
 
         <reference anchor="MOSCA2018">
           <front>
@@ -1341,8 +1321,7 @@ id-pe assignment.</t>
             <date year="2018"/>
           </front>
           <seriesInfo name="IEEE Security &amp; Privacy" value="Vol. 16, No. 5, pp. 38-41"/>
-          <format type="DOI" target="https://doi.org/10.1109/MSP.2018.3761723"/>
-        </reference>
+          </reference>
 
       </references>
     </references>
@@ -1367,7 +1346,7 @@ accommodate renewal lead time).</li>
 
       <section anchor="appendix-a-asn1">
         <name>ASN.1 Value (Informative)</name>
-        <sourcecode type="asn.1"><![CDATA[
+        <sourcecode type="asn.1">
 PQRotationEnvelope ::= SEQUENCE {
     envelopeValid TRUE,
     envelopeCommittedAlgorithmSet SEQUENCE {
@@ -1378,24 +1357,24 @@ PQRotationEnvelope ::= SEQUENCE {
             algorithm  2.16.840.1.101.3.4.2.2  -- id-sha384
         },
         spkiHash  OCTET STRING (48 bytes -- SHA-384 output),
-        keyAlgorithmHint  ABSENT  -- same as envelopeCommittedAlgorithmSet
+        keyAlgorithmHint ABSENT  -- as above
     },
     envelopeNotAfter  GeneralizedTime "20270401000000Z",
     manifestURI  ABSENT
 }
-]]></sourcecode>
+</sourcecode>
 
         <t>The extension appears in the certificate's extensions list as:</t>
 
-        <sourcecode type="asn.1"><![CDATA[
+        <sourcecode type="asn.1">
 Extension ::= SEQUENCE {
     extnID    1.3.6.1.5.5.7.1.TBD2,  -- id-pe-pq-rotation-envelope
     critical  FALSE,                  -- MUST be non-critical
-    extnValue OCTET STRING {          -- DER encoding of PQRotationEnvelope
+    extnValue OCTET STRING {  -- DER of PQRotationEnvelope
         -- (DER bytes omitted; see description above)
     }
 }
-]]></sourcecode>
+</sourcecode>
       </section>
     </section>
 
@@ -1449,16 +1428,16 @@ compliance, provided the composite includes an approved PQC component.</t>
         <thead>
           <tr>
             <th>Mechanism</th>
-            <th>Forward Commitment?</th>
-            <th>Key-Specific Binding?</th>
-            <th>Downgrade Detection?</th>
+            <th>Fwd Commit?</th>
+            <th>Key Bind?</th>
+            <th>Downgrade?</th>
             <th>ARI Hook?</th>
-            <th>Non-Critical?</th>
+            <th>Non-Crit?</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>draft-reddy Rotation Envelope (continuityPeriod)</td>
+            <td>draft-reddy pq-commit</td>
             <td>Temporal only</td>
             <td>No</td>
             <td>Heuristic only</td>
@@ -1466,7 +1445,7 @@ compliance, provided the composite includes an approved PQC component.</t>
             <td>Yes</td>
           </tr>
           <tr>
-            <td>RFC 9763 RelatedCertificate</td>
+            <td>RFC 9763 Related Cert</td>
             <td>No (current binding)</td>
             <td>Current cert only</td>
             <td>No</td>
@@ -1474,7 +1453,7 @@ compliance, provided the composite includes an approved PQC component.</t>
             <td>Yes</td>
           </tr>
           <tr>
-            <td>draft-certdiscovery certHash</td>
+            <td>certdiscovery certHash</td>
             <td>No (existing cert)</td>
             <td>Existing cert hash</td>
             <td>No</td>
@@ -1482,7 +1461,7 @@ compliance, provided the composite includes an approved PQC component.</t>
             <td>Yes</td>
           </tr>
           <tr>
-            <td>draft-ounsworth external-pubkeys</td>
+            <td>ounsworth ext-pubkeys</td>
             <td>No (current key)</td>
             <td>Current key hash</td>
             <td>No</td>

@@ -1,0 +1,504 @@
+
+
+
+
+Limited Additional Mechanisms for PKIX and SMIME              B. Vicente
+Internet-Draft                                        Sanctum SecOps LLC
+Intended status: Informational                            16 August 2026
+Expires: 17 February 2027
+
+
+            PQC Hybrid Commitment (PQCHC) X.509 v3 Extension
+                      draft-vicente-lamps-pqchc-03
+
+Abstract
+
+   This document defines the PQC Hybrid Commitment (PQCHC) X.509 v3
+   extension, a non-critical certificate extension that records a
+   cryptographic commitment to a post-quantum algorithm migration
+   schedule directly in an X.509 certificate.  The commitment allows
+   relying parties to verify, at certificate validation time, that the
+   issuing CA has made a binding, verifiable declaration of its PQC
+   migration timeline.
+
+   This revision (-03) clarifies differentiation from composite-
+   signature schemes (draft-ietf-lamps-pq-composite-sigs, draft-ietf-
+   lamps-cert-binding-for-multi-auth) and adds a Posture B IPR notice.
+   The PQCHC extension encodes a commitment to future algorithm agility
+   — it is not itself a composite signature scheme and does not alter
+   the primary signature algorithm of the certificate.
+
+Supplementary Materials
+
+   This note is to be removed before publishing as an RFC.
+
+   Reference implementation: CygnetLib
+   (https://github.com/sanctumsecopsmssp/CygnetLib
+   (https://github.com/sanctumsecopsmssp/CygnetLib)).  JSON evidence:
+   algorithm registry, CNSA 2.0 compliance matrix, IETF PQC
+   interoperability status, and ACTV test vectors are in the evidence/
+   directory.  CAGE/NCAGE: 20XS3.  Apex website:
+   https://www.sanctumsecops.com/ (https://www.sanctumsecops.com/).
+
+Source and Archival
+
+   This note is to be removed before publishing as an RFC.
+
+   Source for this draft is maintained at https://github.com/Sanc-Admin/
+   lamps-pqchc (https://github.com/Sanc-Admin/lamps-pqchc).  Author
+   ORCID iD: https://orcid.org/0009-0006-6395-5308
+   (https://orcid.org/0009-0006-6395-5308).
+
+IPR Considerations
+
+
+
+Vicente                 Expires 17 February 2027                [Page 1]
+
+Internet-Draft                    PQCHC                      August 2026
+
+
+   This note is to be removed before publishing as an RFC.
+
+   Sanctum IP Co (a Delaware corporation, assignee of Sanctum SecOps
+   LLC) holds or intends to file patent or other intellectual property
+   rights covering subject matter described in this document, including
+   the PQCHC commitment structure, the schedule-binding mechanism, and
+   the relying-party validation procedure.  The public disclosure of
+   this Internet-Draft constitutes prior art as of its submission date
+   with respect to the specific combination of features described
+   herein.  By posting this Internet-Draft, the author submits to the
+   IETF Trust the rights described in BCP 78 and BCP 79.  All
+   intellectual property described in this document is owned by Sanctum
+   IP Co, 128 Dry Run Rd, Pine City, NY 14871.  Contact: brian@sso-
+   labs.com.  Implementers MUST consult the IETF Datatracker IPR page
+   for this document before implementation.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 17 February 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+
+
+
+
+Vicente                 Expires 17 February 2027                [Page 2]
+
+Internet-Draft                    PQCHC                      August 2026
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
+     1.1.  Motivation  . . . . . . . . . . . . . . . . . . . . . . .   3
+     1.2.  Differentiation from Adjacent Work  . . . . . . . . . . .   3
+   2.  Conventions and Definitions . . . . . . . . . . . . . . . . .   4
+   3.  PQCHC Extension Definition  . . . . . . . . . . . . . . . . .   5
+     3.1.  Object Identifier . . . . . . . . . . . . . . . . . . . .   5
+     3.2.  Syntax  . . . . . . . . . . . . . . . . . . . . . . . . .   5
+     3.3.  Criticality . . . . . . . . . . . . . . . . . . . . . . .   6
+   4.  Relying Party Validation Procedure  . . . . . . . . . . . . .   6
+   5.  Requirements  . . . . . . . . . . . . . . . . . . . . . . . .   6
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . .   7
+     6.1.  Commitment Binding Strength . . . . . . . . . . . . . . .   7
+     6.2.  Migration Date Enforcement  . . . . . . . . . . . . . . .   7
+     6.3.  Classical Signature on Commitment . . . . . . . . . . . .   7
+   7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   8
+   8.  Normative References  . . . . . . . . . . . . . . . . . . . .   8
+   9.  Informative References  . . . . . . . . . . . . . . . . . . .   8
+   Appendix A.  Acknowledgements . . . . . . . . . . . . . . . . . .   8
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   9
+
+1.  Introduction
+
+1.1.  Motivation
+
+   X.509 certificates today carry no verifiable declaration of the
+   issuing CA's post-quantum migration timeline.  Relying parties that
+   require PQC-ready certificate chains have no mechanism to distinguish
+   CAs that have committed to a migration schedule from those that have
+   not, without out-of-band policy documents that are not machine-
+   verifiable at certificate validation time.
+
+   NIST FIPS 204 (ML-DSA) [FIPS204] and FIPS 205 (SLH-DSA) [FIPS205]
+   define the primary post-quantum digital signature algorithms.  The
+   PQCHC extension provides a certificate-embedded, cryptographically
+   bound record of when and how the issuing CA commits to transitioning
+   to these or other NIST-approved PQC algorithms.
+
+1.2.  Differentiation from Adjacent Work
+
+   PQCHC is *not* a composite-signature scheme.  It does not define a
+   new signature algorithm, does not modify the signatureAlgorithm field
+   of the certificate, and does not require dual signing.  It is a non-
+   critical v3 extension carrying a structured commitment object.  This
+   differentiates it explicitly from:
+
+
+
+
+
+Vicente                 Expires 17 February 2027                [Page 3]
+
+Internet-Draft                    PQCHC                      August 2026
+
+
+   *  *draft-ietf-lamps-pq-composite-sigs*: Defines a composite public
+      key and composite signature algorithm combining classical and PQC
+      algorithms in a single AlgorithmIdentifier.  PQCHC carries no
+      composite signature; it carries a commitment to future migration.
+
+   *  *draft-ietf-lamps-cert-binding-for-multi-auth*: Defines
+      certificate binding for multi-algorithm authentication, enabling a
+      relying party to require proof of possession of multiple
+      algorithm-specific keys.  PQCHC does not define multi-auth
+      binding; it records a CA's migration commitment as a non-critical
+      extension.
+
+   The PQCHC extension is complementary to composite-signature and
+   multi-auth binding schemes: a CA may issue a certificate with both a
+   composite signature algorithm and a PQCHC extension, using the PQCHC
+   extension to record the schedule for full PQC-only migration once
+   composite-signature support is established in the relying-party
+   ecosystem.
+
+2.  Conventions and Definitions
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in BCP
+   14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals as shown here.
+
+   Migration Commitment:
+      A structured, cryptographically signed declaration by a CA
+      specifying the target PQC algorithm family, the planned migration
+      date, and a commitment hash binding the declaration to the
+      certificate.
+
+   PQCHC Extension:
+      The X.509 v3 non-critical extension defined in this document
+      carrying a Migration Commitment.
+
+   Commitment Hash:
+      A hash binding the Migration Commitment to the certificate's
+      tbsCertificate structure, preventing substitution of the
+      commitment across certificates.
+
+   Target Algorithm Family:
+      The NIST-approved PQC algorithm to which the CA commits to
+      migrate, identified by OID.  RECOMMENDED values: id-ML-DSA (FIPS
+      204), id-SLH-DSA (FIPS 205).
+
+
+
+
+
+Vicente                 Expires 17 February 2027                [Page 4]
+
+Internet-Draft                    PQCHC                      August 2026
+
+
+3.  PQCHC Extension Definition
+
+3.1.  Object Identifier
+
+   The PQCHC extension is identified by the following OID (to be
+   assigned by IANA or designated expert; placeholder used until
+   assignment):
+
+   id-ce-pqchc OBJECT IDENTIFIER ::= { id-ce TBD }
+
+3.2.  Syntax
+
+   PQCHCExtension ::= SEQUENCE {
+       version            INTEGER DEFAULT 1,
+       targetAlgFamily    AlgorithmIdentifier,
+       migrationDate      GeneralizedTime,
+       commitmentHash     OCTET STRING,
+       commitmentHashAlg  AlgorithmIdentifier,
+       issuerSig          BIT STRING OPTIONAL
+   }
+
+   version:
+      Version of the PQCHC structure.  This document defines version 1.
+
+   targetAlgFamily:
+      AlgorithmIdentifier identifying the target PQC algorithm.  MUST be
+      a NIST-approved PQC algorithm OID per FIPS 204 or FIPS 205.
+
+   migrationDate:
+      The date by which the CA commits to complete migration to the
+      target algorithm family for new certificate issuance.  MUST be a
+      future date at time of certificate issuance.  SHOULD NOT be more
+      than 5 years from the certificate's notBefore date.
+
+   commitmentHash:
+      Hash of the DER encoding of the certificate's tbsCertificate
+      structure, computed using the algorithm identified in
+      commitmentHashAlg.  Binds the commitment to this specific
+      certificate.
+
+   commitmentHashAlg:
+      AlgorithmIdentifier for the hash algorithm used in commitmentHash.
+      MUST be SHA-256 or stronger.
+
+
+
+
+
+
+
+
+Vicente                 Expires 17 February 2027                [Page 5]
+
+Internet-Draft                    PQCHC                      August 2026
+
+
+   issuerSig:
+      OPTIONAL.  A signature over the DER encoding of the remaining
+      PQCHC fields using the CA's private key.  When present, allows
+      relying parties to verify the commitment without re-verifying the
+      full certificate chain.  MAY use the CA's current (classical)
+      signing key or a PQC signing key.
+
+3.3.  Criticality
+
+   The PQCHC extension MUST be marked non-critical.  Relying parties
+   that do not implement PQCHC MUST ignore the extension per [RFC5280]
+   Section 4.2.  This ensures backward compatibility with existing
+   certificate validation implementations.
+
+4.  Relying Party Validation Procedure
+
+   A relying party that implements PQCHC validation SHOULD:
+
+   1.  Locate the PQCHC extension by OID in the certificate's v3
+       extensions.
+
+   2.  Verify that commitmentHashAlg is an acceptable hash algorithm.
+
+   3.  Compute the hash of the certificate's tbsCertificate DER encoding
+       using commitmentHashAlg.
+
+   4.  Verify that the computed hash equals commitmentHash.
+
+   5.  If issuerSig is present, verify the signature over the remaining
+       PQCHC fields.
+
+   6.  Evaluate migrationDate against deployment policy: if the
+       migrationDate has passed without CA migration, the relying party
+       MAY treat the commitment as violated and apply policy-defined
+       consequences (e.g., elevated audit logging, rejection of new
+       certificates from that CA).
+
+   7.  Evaluate targetAlgFamily against deployment policy to confirm the
+       committed algorithm is acceptable.
+
+5.  Requirements
+
+   *REQ-PQCHC-1: Non-Critical Extension.* The PQCHC extension MUST be
+   non-critical.
+
+   *REQ-PQCHC-2: NIST-Approved Target Algorithm.* The targetAlgFamily
+   MUST identify a NIST-approved PQC signature algorithm.
+
+
+
+
+Vicente                 Expires 17 February 2027                [Page 6]
+
+Internet-Draft                    PQCHC                      August 2026
+
+
+   *REQ-PQCHC-3: Future Migration Date.* The migrationDate MUST be a
+   date after the certificate's notBefore at issuance time.
+
+   *REQ-PQCHC-4: Commitment Hash Binding.* The commitmentHash MUST be
+   computed over the DER encoding of the certificate's tbsCertificate.
+
+   *REQ-PQCHC-5: Backward Compatibility.* The extension MUST NOT cause
+   validation failure on non-implementing relying parties.  The non-
+   critical marking satisfies this requirement.
+
+   *REQ-PQCHC-6: No Composite Signature Alteration.* The PQCHC extension
+   MUST NOT alter the signatureAlgorithm field or the primary signature
+   of the certificate.  It is informational commitment metadata only.
+
+6.  Security Considerations
+
+6.1.  Commitment Binding Strength
+
+   The commitmentHash binds the Migration Commitment to a specific
+   certificate.  An attacker who can forge the hash can substitute a
+   different commitment into a certificate.  The hash algorithm MUST be
+   SHA-256 or stronger to prevent preimage and collision attacks against
+   the binding.  In PQC-capable deployments, SHA-3 (SHAKE256) is
+   RECOMMENDED.
+
+6.2.  Migration Date Enforcement
+
+   The PQCHC extension is informational — it records a commitment but
+   does not enforce it.  Enforcement is a matter of relying-party policy
+   and ecosystem governance.  Deployments SHOULD define policy
+   consequences for CAs that issue certificates past their committed
+   migrationDate without completing migration, such as CA-audit flags or
+   trust anchor removal procedures.
+
+6.3.  Classical Signature on Commitment
+
+   If issuerSig uses a classical (non-PQC) signing key, the commitment
+   signature provides no quantum resistance.  In a post-CRQC
+   environment, the commitment's authenticity would rely solely on the
+   certificate chain validation, not the issuerSig field.  CAs operating
+   in high-assurance environments SHOULD sign the commitment with a PQC
+   key even before migrating the primary certificate signature
+   algorithm.
+
+
+
+
+
+
+
+
+Vicente                 Expires 17 February 2027                [Page 7]
+
+Internet-Draft                    PQCHC                      August 2026
+
+
+7.  IANA Considerations
+
+   This document requests assignment of an OID arc for the id-ce-pqchc
+   extension from IANA's SMI Security for PKIX Certificate Extension
+   registry, or from a designated expert under the id-ce arc.  The
+   placeholder TBD in the ASN.1 module will be replaced with the
+   assigned value upon registration.
+
+8.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC5280]  Cooper, D., Santesson, S., Farrell, S., Boeyen, S.,
+              Housley, R., and W. Polk, "Internet X.509 Public Key
+              Infrastructure Certificate and Certificate Revocation List
+              (CRL) Profile", RFC 5280, DOI 10.17487/RFC5280, May 2008,
+              <https://www.rfc-editor.org/info/rfc5280>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+9.  Informative References
+
+   [FIPS204]  NIST, "Module-Lattice-Based Digital Signature Standard",
+              FIPS 204, August 2024.
+
+   [FIPS205]  NIST, "Stateless Hash-Based Digital Signature Standard",
+              FIPS 205, August 2024.
+
+Appendix A.  Acknowledgements
+
+   The author thanks Mike Ounsworth (Entrust) for valuable feedback on
+   draft structure and boilerplate compliance, and the IETF PQUIP,
+   LAMPS, and OAuth working groups for their ongoing work on post-
+   quantum cryptography standardization.
+
+   CygnetLib (https://github.com/sanctumsecopsmssp/CygnetLib
+   (https://github.com/sanctumsecopsmssp/CygnetLib)) serves as the
+   reference implementation for algorithms described in this document.
+   JSON evidence files including the algorithm registry, CNSA 2.0
+   compliance matrix, IETF PQC interoperability status, and ACTV test
+   vector results are available in the evidence/ directory of the
+   CygnetLib repository.
+
+
+
+
+Vicente                 Expires 17 February 2027                [Page 8]
+
+Internet-Draft                    PQCHC                      August 2026
+
+
+Author's Address
+
+   Brian Vicente
+   Sanctum SecOps LLC
+   Pine City, NY
+   United States of America
+   Email: bvicente@sanctumsecops.com
+   URI:   https://orcid.org/0009-0006-6395-5308
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Vicente                 Expires 17 February 2027                [Page 9]
